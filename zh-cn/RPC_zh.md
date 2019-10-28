@@ -16,7 +16,7 @@ using Neo.Network.RPC;
 发送RPC请求是通过模块中的`RpcClient`类来实现的，初始化该类有两种方法，都需要提供一个NEO节点的RPC端口，这里使用NEO测试网的种子节点：
 
 ```c#
-RpcClient client = new RpcClient("http://seed1.neo.org:10331");
+RpcClient client = new RpcClient("http://seed1t.neo.org:20332");
 ```
 
 或者
@@ -24,7 +24,7 @@ RpcClient client = new RpcClient("http://seed1.neo.org:10331");
 ```c#
 RpcClient client2 = new RpcClient(new HttpClient()
 {
-    BaseAddress = new Uri("http://seed1.neo.org:10331")
+    BaseAddress = new Uri("http://seed1t.neo.org:20332")
 });
 ```
 

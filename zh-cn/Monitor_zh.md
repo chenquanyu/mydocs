@@ -2,8 +2,9 @@
 
 注：本文档中使用的 NEO 版本为 3.0 及以上。
 
-通过RpcClient模块可以获取区块，交易和合约的信息，通过特定合约方法的调用可以获取Policy和NEP5 Token的信息。
+通过`RpcClient`模块可以获取区块，交易和合约的信息，通过特定合约方法的调用可以获取Policy和NEP5 Token的信息。
 
+## 添加引用
 在需要使用该模块的项目文件的头部添加如下代码：
 
 ```c#
@@ -46,7 +47,7 @@ RpcTransaction transaction = client.GetRawTransaction("0x48ec3d235c6b386eee324a7
 
 ## 获取Policy相关信息
 
-在NEO3中通过调用原生合约PolicyContract中的方法获取Policy相关信息：
+在NEO3中通过调用原生合约`PolicyContract`中的方法获取Policy相关信息：
 
 ```c#
 // choose a neo node with rpc opened
@@ -65,10 +66,9 @@ uint maxBlockSize = policyAPI.GetMaxBlockSize(); // 262144, (1024 * 256) bytes o
 uint maxTransactionsPerBlock = policyAPI.GetMaxTransactionsPerBlock(); // 512, max 512 transactions one block
 ```
 
-
 ## 获取合约信息
 
-通过RpcClient模块可以获取合约脚本，哈希与manifest的所有信息：
+通过`RpcClient`模块可以获取合约脚本，哈希与manifest的所有信息：
 
 ```c#
 // choose a neo node with rpc opened
@@ -78,7 +78,7 @@ RpcClient client = new RpcClient("http://seed1t.neo.org:20332");
 ContractState contractState = client.GetContractState(NativeContract.NEO.Hash.ToString());
 ```
 
-对于NEP5合约可以通过Nep5API获取名称，标记，小数位和总量等信息：
+对于NEP5合约可以通过`Nep5API`获取名称，标记，小数位和总量等信息：
 
 ```c#
 // get nep5 token info

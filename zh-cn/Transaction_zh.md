@@ -75,12 +75,19 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(tx)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block height {await p}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
 
             Console.ReadKey();
         }
     }
 }           
+```
+
+`WalletAPI`封装了上面的过程，NEP5转账可以简化为：
+
+```c#
+WalletAPI walletAPI = new WalletAPI(client);
+Transaction tx = walletAPI.Transfer(NativeContract.NEO.Hash, sendKey, receiver, 1);
 ```
 
 ## 构造一笔向多签账户转账的交易
@@ -144,7 +151,7 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(tx)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block height {await p}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
 
             Console.ReadKey();
         }
@@ -210,7 +217,7 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(tx)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block height {await p}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
 
             Console.ReadKey();
         }

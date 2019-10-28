@@ -1,10 +1,10 @@
 # NEO3 SDK - 合约部署与调用
 
-我们提供了```ContractClient```类来实现合约部署和只读调用的接口，此外对于符合NEP5规范的合约我们还提供了```Nep5API```类来实现相关的方法。
+我们提供了`ContractClient`类来实现合约部署和只读调用的接口，此外对于符合NEP5规范的合约我们还提供了`Nep5API`类来实现相关的方法。
 
 ## 合约部署
 
-合约部署之前需要对合约进行编译以获取到合约脚本与manifest，合约部署时同样需要发送账户支付系统费和网络费，下面的示例通过```DeployContract```方法构造交易，交易广播上链成功后才可以调用合约中的方法：
+合约部署之前需要对合约进行编译以获取到合约脚本与manifest，合约部署时同样需要发送账户支付系统费和网络费，下面的示例通过`DeployContract`方法构造交易，交易广播上链成功后才可以调用合约中的方法：
 
 ```c#
 using Neo.Network.P2P.Payloads;
@@ -43,7 +43,7 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(transaction)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block height {await p}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
 
             Console.ReadKey();
         }
@@ -121,7 +121,7 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(tx)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block height {await p}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
 
             Console.ReadKey();
         }
