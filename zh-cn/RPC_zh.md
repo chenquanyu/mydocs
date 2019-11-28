@@ -1,32 +1,27 @@
-# NEO SDK - RPC模块相关用法
+# NEO RPC SDK - RPC调用详细列表
 
 注：本文档中使用的 NEO 版本为 3.0 及以上。
 
-可以通过该模块中提供的标准方法在代码中发送RPC请求，只需要传入相应的参数，而不再需要使用第三方工具（如：Postman，Fiddler等）自己构造JSON请求主体。
+`NEO RPC SDK` 封装了所有`RpcServer`提供的接口，可以通过该模块中提供的标准方法在代码中发送RPC请求，只需要传入相应的参数，SDK就会根据参数构造相应的JSON-RPC请求，进而获得节点返回的数据。
 
-## 添加引用
-
-在需要使用该模块的项目文件的头部添加如下代码：
-
-```c#
-using Neo.Network.RPC;
-```
 
 ## 初始化
-发送RPC请求是通过模块中的`RpcClient`类来实现的，初始化该类有两种方法，都需要提供一个NEO节点的RPC端口，这里使用NEO测试网的种子节点：
+发送RPC请求需要先初始化`RpcClient`类型，可以根据自己的需要选择一个NEO节点的RPC Server端口，这里举例说明：
 
+测试网节点：
 ```c#
+// TestNet Node
 RpcClient client = new RpcClient("http://seed1t.neo.org:20332");
 ```
 
-或者
-
+本地节点（本地节点是本地维护的Neo-Cli,可以根据配置连接主网，测试网或者私链）：
 ```c#
-RpcClient client2 = new RpcClient(new HttpClient()
-{
-    BaseAddress = new Uri("http://seed1t.neo.org:20332")
-});
+// Local Node
+RpcClient client = new RpcClient("http://localhost:20332");
 ```
+
+> - 开发过程中不要直接在主网进行测试以免造成财产损失。
+> - 一个应用程序中一般只需要初始化一个`RpcClient`实例，不要在每个方法中初始化`RpcClient`。
 
 ## 获取当前区块高度
 区块索引 = 区块高度 = 区块数量 - 1
