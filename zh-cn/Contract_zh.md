@@ -1,12 +1,44 @@
-# NEO3 SDK - 合约部署与调用
+# NEO RPC SDK - 合约部署与调用
 
-我们提供了`ContractClient`类来实现合约部署和只读调用的接口，此外对于符合NEP5规范的合约我们还提供了`Nep5API`类来实现相关的方法。
+> 注：本文档中使用的 NEO 版本为 3.0 及以上。
+
+由于在NEO3中绝大部分功能都是通过合约提供的，所以理解合约是使用NEO3的基础，每个合约由脚本哈希(ScriptHash)作为唯一表示，通常也是调用合约的必须参数。本文档主要介绍了SDK下面几个方面的功能：
+
+- 封装了合约部署交易的构建方法
+- 使用只读模式调用合约中方法
+- `Nep5API`类封装了调用NEP5合约相关的方法
 
 ## 合约部署
 
-合约部署之前需要对合约进行编译以获取到合约脚本与manifest，合约部署时同样需要发送账户支付系统费和网络费，下面的示例通过`DeployContract`方法构造交易，交易广播上链成功后才可以调用合约中的方法：
+`ContractClient`中提供了合约部署交易的构建方法`CreateDeployContractTx`, 参数为合约脚本，manifest和支付系统费和网络费的账户密钥对，其中合约脚本和manifest可通过编译获取，账户中需要有足够GAS支付所需费用。
 
 ```c#
+// create the deploy contract transaction
+Transaction transaction = contractClient.CreateDeployContractTx(script, manifest, senderKey);
+```
+
+交易构建后需要广播到链上:
+
+```c#
+// Broadcasts the transaction over the NEO network
+client.SendRawTransaction(transaction);
+Console.WriteLine($"Transaction {transaction.Hash.ToString()} is broadcasted!");
+```
+
+等待交易上链后可以获取交易的执行状态以确保合约部署成功:
+
+```c#
+// print a message after the transaction is on chain
+WalletAPI neoAPI = new WalletAPI(client);
+neoAPI.WaitTransaction(transaction)
+    .ContinueWith(async (p) => Console.WriteLine($"Transaction vm state is  {(await p).VMState}"));
+
+```
+
+下面是完整的示例：
+
+```c#
+using Neo;
 using Neo.Network.P2P.Payloads;
 using Neo.Network.RPC;
 using Neo.SmartContract;
@@ -31,10 +63,10 @@ namespace ConsoleApp1
             ContractManifest manifest = ContractManifest.CreateDefault(script.ToScriptHash());
 
             // deploy contract needs sender to pay the system fee
-            KeyPair senderKey = "L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb".ToKeyPair();
+            KeyPair senderKey = Utility.GetKeyPair("L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb");
 
             // create the deploy transaction
-            Transaction transaction = contractClient.DeployContract(script, manifest, senderKey);
+            Transaction transaction = contractClient.CreateDeployContractTx(script, manifest, senderKey);
 
             // Broadcasts the transaction over the NEO network
             client.SendRawTransaction(transaction);
@@ -43,7 +75,7 @@ namespace ConsoleApp1
             // print a message after the transaction is on chain
             WalletAPI neoAPI = new WalletAPI(client);
             neoAPI.WaitTransaction(transaction)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
+               .ContinueWith(async (p) => Console.WriteLine($"Transaction vm state is  {(await p).VMState}"));
 
             Console.ReadKey();
         }
@@ -53,7 +85,7 @@ namespace ConsoleApp1
 
 ## 合约模拟调用
 
-```ContractClient```提供了```TestInvoke```方法来对合约进行模拟调用，执行后不会影响链上数据。可以直接调用读取信息的合约方法，比如下面的例子调用了NEO原生合约中的name方法
+`ContractClient`提供了`TestInvoke`方法来对合约进行模拟调用，执行后不会影响链上数据。可以直接调用读取信息的合约方法，比如下面的例子调用了NEO原生合约中的name方法
 
 ```c#
 // choose a neo node with rpc opened
@@ -68,85 +100,69 @@ string name = contractClient.TestInvoke(scriptHash, "name")
     .Stack.Single().ToStackItem().GetString();
 ```
 
-## 合约调用（上链交易）
-
-上链的合约调用要经过构建交易脚本，构建交易和广播上链等过程，可参见[交易构造模块文档](Transaction_zh)：
+或者使用`MakeScript`构造想要执行的脚本，再调用`InvokeScript`获取执行结果
 
 ```c#
-using Neo;
-using Neo.Network.P2P.Payloads;
-using Neo.Network.RPC;
-using Neo.SmartContract.Native;
-using Neo.VM;
-using Neo.Wallets;
-using System;
+// construct the script you want to run in test mode
+byte[] script = scriptHash.MakeScript("name");
+// call invoke script
+name =  client.InvokeScript(script).Stack.Single().ToStackItem().GetString();
+``` 
 
-namespace ConsoleApp1
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            // choose a neo node with rpc opened
-            RpcClient client = new RpcClient("http://seed1t.neo.org:20332");
+## 合约调用（上链交易）
 
-            // get the KeyPair of your account, this account will pay the system and network fee
-            KeyPair sendKey = "L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb".ToKeyPair();
-            UInt160 sender = sendKey.ToScriptHash();
+上链的合约调用一般要经过下面几个步骤：
 
-            // add Cosigners, this is a collection of scripthashs which need to be signed
-            Cosigner[] cosigners = new[] { new Cosigner { Scopes = WitnessScope.CalledByEntry, Account = sender } };
+1. 构建调用脚本，以下以调用原生合约NEO的`transfer`方法为例
 
-            // get the scripthash of the account you want to transfer to
-            UInt160 receiver = "AKviBGFhWeS8xrAH3hqDQufZXE9QM5pCeP".ToUInt160();
+    ```c#
+    // construct the script, in this example, we will transfer 1 NEO to receiver
+    UInt160 scriptHash = NativeContract.NEO.Hash;
+    byte[] script = scriptHash.MakeScript("transfer", sender, receiver, 1);
+    ```
 
-            // construct the script, in this example, we will transfer 1 NEO to receiver
-            UInt160 scriptHash = NativeContract.NEO.Hash;
-            byte[] script = scriptHash.MakeScript("transfer", sender, receiver, 1);
+2. 构建交易
 
-            // initialize the TransactionManager with rpc client and sender scripthash
-            Transaction tx = new TransactionManager(client, sender)
-                // fill the script, attribute, cosigner and network fee
-                .MakeTransaction(script, null, cosigners, 0)
-                // add signature for the transaction with sendKey
-                .AddSignature(sendKey)
-                // sign transaction with the added signature
-                .Sign()
-                .Tx;
+    ```c#
+    // initialize the TransactionManager with rpc client and sender scripthash
+    Transaction tx = new TransactionManager(client, sender)
+        // fill the script, attribute, cosigner and network fee
+        .MakeTransaction(script, null, cosigners, 0)
+        // add signature for the transaction with sendKey
+        .AddSignature(sendKey)
+        // sign transaction with the added signature
+        .Sign()
+        .Tx;
+    ```
 
-            // broadcasts transaction over the NEO network.
-            client.SendRawTransaction(tx);
-            Console.WriteLine($"Transaction {tx.Hash.ToString()} is broadcasted!");
+3. 交易构造后需要广播到链上:
 
-            // print a message after the transaction is on chain
-            WalletAPI neoAPI = new WalletAPI(client);
-            neoAPI.WaitTransaction(tx)
-               .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
+    ```c#
+    // broadcasts the transaction over the NEO network
+    client.SendRawTransaction(tx);
+    ```
 
-            Console.ReadKey();
-        }
-    }
-}   
-```
+4. 等待交易上链后可以获取交易的执行状态以确保合约调用成功:
+
+    ```c#
+    // print a message after the transaction is on chain
+    WalletAPI neoAPI = new WalletAPI(client);
+    neoAPI.WaitTransaction(tx)
+        .ContinueWith(async (p) => Console.WriteLine($"Transaction vm state is  {(await p).VMState}"));
+    ```
+
+完整示例请参考[交易构造模块文档](Transaction_zh)。
 
 ## NEP5合约
 
-```Nep5API```封装了转账交易的生成方法，以上过程中的交易构造过程可简化为：
+`Nep5API`封装了转账交易的生成方法，以上过程中的交易过程可简化为：
 
 ```c#
-byte[] script = scriptHash.MakeScript("transfer", sender, receiver, 1);
-Transaction tx = new TransactionManager(client, sender)
-    .MakeTransaction(script, null, cosigners, 0)
-    .AddSignature(sendKey)
-    .Sign()
-    .Tx;
-
-// equals to
 Nep5API nep5API = new Nep5API(client);
 Transaction tx = nep5API.CreateTransferTx(scriptHash, sendKey, receiver, 1);
 ```
 
-此外```Nep5API```还提供了简单的读取方法：
+此外`Nep5API`还提供了简单的读取方法：
 
 ```c#
 // get nep5 name
