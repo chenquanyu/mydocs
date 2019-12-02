@@ -103,7 +103,7 @@ NEO中大部分的操作与账户有关，而钱包是账户的集合，其中�
 ## `WalletAPI`
 
 ### 初始化
-使用钱包相关接口需要依赖`RpcClient`：
+`WalletAPI`初始化：
 
 ```c#
 // choose a neo node with rpc opened
@@ -113,46 +113,69 @@ WalletAPI walletAPI = new WalletAPI(client);
 
 ### 查询余额
 
-- NEP5资产余额查询示例：
+> 注：账户余额的类型一般是`BigInteger`，这是把小数部分取整后的一种表示，需要除以`Factor`才是Token的实际数量。
 
-```c#
-// get the neo balance of account
-string tokenHash = "0x43cf98eddbe047e198a3e5d57006311442a0ca15";
-string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
-walletAPI.GetTokenBalance(tokenHash, address);
-```
+- NEP5资产余额查询可以使用字符串参数
+    ```c#
+    // get the neo balance of account
+    string tokenHash = "0x43cf98eddbe047e198a3e5d57006311442a0ca15";
+    string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
+    BigInteger balance = walletAPI.GetTokenBalance(tokenHash, address);
+    ```
+
+    或者 使用ScriptHash类型的参数
+    ```c#
+    // get the neo balance of account
+    UInt160 tokenScriptHash = Utility.GetScriptHash(tokenHash);
+    UInt160 accountHash = Utility.GetScriptHash(address);
+    Nep5API nep5API = new Nep5API(client);
+    BigInteger balance = nep5API.BalanceOf(tokenScriptHash, accountHash);
+    ```
 
 - 在NEO3中NEO和GAS都是NEP5资产，且脚本哈希固定，所以这里提供了更简单的接口：
+    ```c#
+    // get the neo balance
+    uint neoBalance = walletAPI.GetNeoBalance(address);
 
-```c#
-// get the neo balance
-uint neoBalance = walletAPI.GetNeoBalance(address);
-
-// get the neo balance
-decimal gasBalance = walletAPI.GetGasBalance(address);
-```
+    // get the neo balance
+    decimal gasBalance = walletAPI.GetGasBalance(address);
+    ```
 
 ## Claim GAS
 
-在Claim GAS之前可以查询当前账户可以Claim的GAS数量：
+1. 在Claim GAS之前可以查询当前地址可以Claim的GAS数量：
 
-```c#
-// get the claimable GAS of one address
-string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
-decimal gasAmount = walletAPI.GetUnclaimedGas(address);
-```
+    ```c#
+    // get the claimable GAS of one address
+    string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
+    decimal gasAmount = walletAPI.GetUnclaimedGas(address);
+    ```
+    或者 使用账户的ScriptHash
 
-在NEO3中Claim GAS的过程是在NEO转账时自动进行的，所以Claim GAS的操作需要构建一笔账户给自己转账的交易：
+    ```c#
+    string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
+    UInt160 accountHash = Utility.GetScriptHash(address);
+    decimal gasAmount = walletAPI.GetUnclaimedGas(accountHash);
+    ```
 
-```c#
-// claiming gas needs the KeyPair of account, you can also use wif or private key hex string
-string wif = "L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb";
-Transaction transaction = walletAPI.ClaimGas(wif);
-```
+2. 在NEO3中Claim GAS的过程是在NEO转账时自动进行的，所以Claim GAS的操作需要构建一笔账户给自己转账的交易：
+
+    ```c#
+    // claiming gas needs the KeyPair of account, you can also use wif or private key hex string
+    string wif = "L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb";
+    Transaction transaction = walletAPI.ClaimGas(wif);
+    ```
+    或者 使用`KeyPair`
+    ```c#
+    KeyPair keyPair = Utility.GetKeyPair(wif);
+    Transaction transaction = walletAPI.ClaimGas(keyPair);
+    ```
 
 ## 资产转账
 
 `WalletAPI`中封装了NEP5转账方法:
+
+可以使用字符串参数
 
 ```c#
 string tokenHash = "0x43cf98eddbe047e198a3e5d57006311442a0ca15";
@@ -166,4 +189,16 @@ walletAPI.Transfer(tokenHash, wif, address, 10);
 WalletAPI neoAPI = new WalletAPI(client);
 neoAPI.WaitTransaction(transaction)
     .ContinueWith(async (p) => Console.WriteLine($"Transaction is on block {(await p).BlockHash}"));
+```
+或者 使用`KeyPair` 和 `UInt160` (ScriptHash)
+
+```c#
+string wif = "L1rFMTamZj85ENnqNLwmhXKAprHuqr1MxMHmCWCGiXGsAdQ2dnhb";
+string address = "AJoQgnkK1i7YSAvFbPiPhwtgdccbaQ7rgq";
+
+KeyPair sender = Utility.GetKeyPair(wif);
+UInt160 receiver = Utility.GetScriptHash(address);
+
+// transfer 10 neo from wif to address
+walletAPI.Transfer(NativeContract.NEO.Hash, sender, receiver, 10);
 ```
