@@ -2,7 +2,7 @@
 
 > 注：本文档中使用的 NEO 版本为 3.0 及以上。
 
-- 基本的区块链数据和状态信息，比如区块高度，区块内容，交易内容和合约基本信息等可以通过`RPC`模块可以直接获取，可以参见[RPC模块文档](RPC_zh.md)；
+- 基本的区块链数据和状态信息，比如区块高度，区块内容，交易内容和合约基本信息等可以通过`RPC`模块可以直接获取，可以参见[RPC模块文档](rpc.md)；
 - 某些特定的合约信息则需要通过特定合约方法的调用，如区块最大交易数量，每字节系统费可以通过`PolicyAPI`获取；NEP5 Token的名称，总量等需要用`Nep5API`获取。
 
 
@@ -38,7 +38,7 @@ RpcBlock block = client.GetBlock("0x953f6efa29c740b68c87e0a060942056382a6912a0dd
 ContractState contractState = client.GetContractState(NativeContract.NEO.Hash.ToString());
 ```
 
-更多信息请参见[RPC模块文档](RPC_zh.md)。
+更多信息请参见[RPC模块文档](rpc.md)。
 
 ## 获取Policy相关信息
 

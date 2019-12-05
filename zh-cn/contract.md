@@ -151,7 +151,7 @@ name =  client.InvokeScript(script).Stack.Single().ToStackItem().GetString();
         .ContinueWith(async (p) => Console.WriteLine($"Transaction vm state is  {(await p).VMState}"));
     ```
 
-完整示例请参考[交易构造模块文档](Transaction_zh)。
+完整示例请参考[交易构造模块文档](transaction.md)。
 
 ## NEP5合约
 
