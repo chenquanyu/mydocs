@@ -78,6 +78,7 @@ using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.Wallets;
 using System;
+using Utility = Neo.Network.RPC.Utility;
 
 namespace ConsoleApp1
 {
@@ -96,7 +97,7 @@ namespace ConsoleApp1
             Cosigner[] cosigners = new[] { new Cosigner { Scopes = WitnessScope.CalledByEntry, Account = sender } };
 
             // get the scripthash of the account you want to transfer to
-            UInt160 receiver = Utility.GetScriptHash("AKviBGFhWeS8xrAH3hqDQufZXE9QM5pCeP");
+            UInt160 receiver = Utility.GetScriptHash("NVVwFw6XyhtRCFQ8SpUTMdPyYt4Vd9A1XQ");
 
             // construct the script, in this example, we will transfer 1 NEO to receiver
             UInt160 scriptHash = NativeContract.NEO.Hash;
@@ -126,6 +127,7 @@ namespace ConsoleApp1
     }
 }
 
+
 ```
 
 `WalletAPI` 封装了上面的过程，NEP5 转账可以简化为：
@@ -148,6 +150,7 @@ using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.Wallets;
 using System;
+using Utility = Neo.Network.RPC.Utility;
 
 namespace ConsoleApp1
 {
@@ -218,6 +221,7 @@ using Neo.SmartContract.Native;
 using Neo.VM;
 using Neo.Wallets;
 using System;
+using Utility = Neo.Network.RPC.Utility;
 
 namespace ConsoleApp1
 {

@@ -45,7 +45,7 @@ using Neo.Network.RPC;
 
 ## 项目地址
 
-`NEO RPC SDK`是NEO3项目的功能子集，完整开源项目请参考：
+`NEO RPC SDK`是neo-modules项目的功能子集，完整开源项目请参考：
 
 NEO：https://github.com/neo-project/neo
 
